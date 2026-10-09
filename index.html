@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>基質ファインダー</title>
+<style>
+/* ========== トークン ========== */
+:root {
+  color-scheme: light dark;
+
+  /* 色：light-dark(ライト, ダーク) */
+  --bg:          light-dark(#f4f5f7, #0e1013);
+  --surface:     light-dark(#ffffff, #171a1f);
+  --surface-2:   light-dark(#eef0f3, #1f232a);
+  --border:      light-dark(#dde1e6, #2a2f37);
+  --text:        light-dark(#15181d, #e9ecf0);
+  --muted:       light-dark(#69717d, #949ca8);
+  --faint:       light-dark(#a3aab4, #5b626d);
+  --accent:      light-dark(#e6c200, #ffe14a);
+  --accent-soft: light-dark(rgb(230 194 0 / .16), rgb(255 225 74 / .14));
+  --accent-ink:  #1a1600;
+  --hit:         light-dark(#1f8f5f, #4fd39a);
+  --hit-soft:    light-dark(rgb(31 143 95 / .12), rgb(79 211 154 / .13));
+  --shadow:      light-dark(0 1px 2px rgb(0 0 0 / .04), 0 1px 2px rgb(0 0 0 / .3)),
+                 light-dark(0 4px 16px rgb(0 0 0 / .05), 0 6px 24px rgb(0 0 0 / .25));
+
+  /* 文字サイズ */
+  --fs-xs: 11px;
+  --fs-sm: 12.5px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+
+  /* 角丸 */
+  --r-sm: 6px;
+  --r-md: 9px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* ========== ベース ========== */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--fs-md)/1.5 "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { margin: 0; }
+button {
+  font: inherit; color: inherit; background: none;
+  border: 0; padding: 0; cursor: pointer;
+}
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* 共通パーツ */
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--shadow);
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--r-md);
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: var(--fs-sm);
+  transition: background .12s, border-color .12s, opacity .12s;
+}
+.btn:not(:disabled):hover { border-color: var(--muted); }
+.badge {
+  display: inline-block; padding: 2px 7px; border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--muted); font-size: var(--fs-xs);
+}
+.label { font-size: var(--fs-xs); color: var(--muted); letter-spacing: .04em; }
+
+/* ========== ヘッダー ========== */
+.wrap { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.logo {
+  width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--accent); color: var(--accent-ink); font-size: 18px; font-weight: 800;
+}
+h1 { font-size: var(--fs-xl); letter-spacing: .02em; }
+.views { margin-left: auto; display: inline-flex; padding: 3px; border-radius: var(--r-pill); background: var(--surface-2); border: 1px solid var(--border); }
+.views button { padding: 6px 14px; border-radius: var(--r-pill); color: var(--muted); font-size: 13px; }
+.views button[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
+.icon-btn { width: 34px; height: 34px; justify-content: center; padding: 0; font-size: 15px; }
+
+/* ========== レイアウト ========== */
+.grid { display: grid; grid-template-columns: 400px 1fr; gap: 20px; align-items: start; }
+.filters { padding: 18px; position: sticky; top: 16px; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .filters { position: static; }
+}
+
+/* ========== フィルター ========== */
+.sel-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 44px;
+  padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.sel-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 11px;
+  border-radius: var(--r-pill); background: var(--accent); color: var(--accent-ink);
+  font-size: var(--fs-sm); font-weight: 600;
+}
+.sel-chip small { opacity: .65; font-weight: 500; }
+.sel-chip button {
+  width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+  background: rgb(0 0 0 / .12); font-size: var(--fs-xs); line-height: 1;
+}
+.placeholder { color: var(--faint); font-size: 13px; }
+.clear-all { margin-left: auto; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+
+.group + .group { margin-top: 18px; }
+.group-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.group-head h2 { font-size: 13px; letter-spacing: .04em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 11px; background: var(--surface-2); }
+.chip .badge { min-width: 18px; padding: 0 5px; text-align: center; background: var(--surface); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.chip[aria-pressed="true"] .badge { background: rgb(0 0 0 / .12); color: inherit; }
+.chip.dead { opacity: .35; }
+
+/* ========== 結果 ========== */
+.result-head { display: flex; align-items: baseline; gap: 10px; margin: 2px 2px 12px; }
+.count { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+.count-of { color: var(--muted); }
+#copyList { margin-left: auto; }
+#copyList.done { background: var(--hit-soft); border-color: var(--hit); color: var(--hit); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.card { padding: 16px; display: grid; gap: 12px; }
+.card-top { display: flex; align-items: center; gap: 8px; }
+.card h3 { font-size: var(--fs-lg); }
+.card .region { font-weight: 600; border: 1px solid var(--border); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.tags .badge { font-size: 11.5px; }
+.tags .hit { background: var(--accent-soft); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+
+.empty { grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--muted); }
+.empty strong { display: block; margin-bottom: 4px; color: var(--text); font-size: 15px; }
+
+/* ========== 一覧表 ========== */
+.matrix-wrap { overflow-x: auto; }
+.matrix { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+.matrix th, .matrix td { padding: 6px 8px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.matrix thead th { position: sticky; top: 0; background: var(--surface); color: var(--muted); font-weight: 600; }
+.matrix thead th.vt { writing-mode: vertical-rl; height: 130px; padding: 10px 2px; vertical-align: bottom; }
+.matrix tbody th { position: sticky; left: 0; text-align: left; background: var(--surface); font-weight: 600; }
+.matrix tbody th small { margin-left: 6px; color: var(--muted); font-weight: 500; }
+.matrix .sep { border-left: 2px solid var(--border); }
+.matrix .y::after { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--hit); }
+.matrix th.sel { color: var(--text); background: var(--accent-soft); }
+.matrix .y.sel::after { background: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.matrix tr.dim > * { opacity: .3; }
+.matrix tbody tr:hover > * { background: var(--surface-2); }
+
+footer { margin-top: 28px; color: var(--faint); font-size: var(--fs-xs); text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true">◐</div>
+    <div>
+      <h1>基質ファインダー</h1>
+      <div class="label">素質から重度超域活性点を絞り込み</div>
+    </div>
+    <div class="views">
+      <button data-view="cards" aria-pressed="true">カード</button>
+      <button data-view="matrix" aria-pressed="false">一覧表</button>
+    </div>
+    <button class="btn icon-btn" id="themeBtn" title="テーマ切替(自動 → ライト → ダーク)">◑</button>
+  </header>
+
+  <div class="grid">
+    <aside class="panel filters">
+      <div class="sel-bar" id="selBar"></div>
+      <div id="groups"></div>
+    </aside>
+
+    <main>
+      <div class="result-head">
+        <span class="count" id="count">0</span>
+        <span class="count-of" id="countOf"></span>
+        <button class="btn" id="copyList" title="表示中の地点をリストとしてコピー"></button>
+      </div>
+      <div id="cardsView" class="cards"></div>
+      <div id="matrixView" class="panel matrix-wrap" hidden></div>
+    </main>
+  </div>
+
+  <footer>データは各地点の「基質一覧」より作成(2026-10-09 時点)。更新はファイル内の DATA を編集してください。</footer>
+</div>
+
+<script>
+/* =========================================================
+   データ定義 — ここを書き換えれば更新できます
+   base を省略した地点は、基礎効果がすべて出るものとして扱います
+   ========================================================= */
+const CATEGORIES = {
+  base:  { label: "基礎効果",  items: ["敏捷UP", "筋力UP", "意志UP", "知性UP", "メイン能力UP"] },
+  extra: { label: "付加効果",  items: ["攻撃力UP", "HPアップ", "物理ダメージUP", "灼熱ダメージUP", "電磁ダメージUP", "寒冷ダメージUP", "自然ダメージUP", "会心率UP", "アーツ強度UP", "必殺技効率UP", "アーツダメージUP", "回復効率UP"] },
+  skill: { label: "スキル効果", items: ["強攻", "圧制", "追襲", "破砕", "昂揚", "巧技", "残虐", "付術", "治癒", "切骨", "噴発", "夜幕", "流回", "効率"] },
+};
+
+const DATA = [
+  { region: "四号谷地", name: "中枢エリア",
+    extra: ["攻撃力UP", "灼熱ダメージUP", "電磁ダメージUP", "寒冷ダメージUP", "自然ダメージUP", "アーツ強度UP", "必殺技効率UP", "アーツダメージUP"],
+    skill: ["強攻", "圧制", "追襲", "破砕", "巧技", "噴発", "流回", "効率"] },
+  { region: "四号谷地", name: "源石研究パーク",
+    extra: ["攻撃力UP", "物理ダメージUP", "電磁ダメージUP", "寒冷ダメージUP", "自然ダメージUP", "会心率UP", "必殺技効率UP", "アーツダメージUP"],
+    skill: ["圧制", "追襲", "昂揚", "巧技", "付術", "治癒", "切骨", "効率"] },
+  { region: "四号谷地", name: "鉱山エリア",
+    extra: ["HPアップ", "物理ダメージUP", "灼熱ダメージUP", "寒冷ダメージUP", "自然ダメージUP", "会心率UP", "アーツ強度UP", "回復効率UP"],
+    skill: ["強攻", "圧制", "巧技", "残虐", "付術", "噴発", "夜幕", "効率"] },
+  { region: "四号谷地", name: "エネルギー高地",
+    extra: ["攻撃力UP", "HPアップ", "物理ダメージUP", "灼熱ダメージUP", "自然ダメージUP", "会心率UP", "アーツ強度UP", "回復効率UP"],
+    skill: ["追襲", "破砕", "昂揚", "残虐", "付術", "治癒", "切骨", "流回"] },
+  { region: "武陵", name: "武陵城",
+    extra: ["攻撃力UP", "HPアップ", "電磁ダメージUP", "寒冷ダメージUP", "会心率UP", "必殺技効率UP", "アーツダメージUP", "回復効率UP"],
+    skill: ["強攻", "破砕", "残虐", "治癒", "切骨", "噴発", "夜幕", "流回"] },
+  { region: "武陵", name: "清波砦",
+    extra: ["HPアップ", "物理ダメージUP", "電磁ダメージUP", "寒冷ダメージUP", "アーツ強度UP", "必殺技効率UP", "アーツダメージUP", "回復効率UP"],
+    skill: ["圧制", "破砕", "昂揚", "巧技", "治癒", "切骨", "噴発", "夜幕"] },
+  { region: "武陵", name: "首礎",
+    extra: ["攻撃力UP", "物理ダメージUP", "灼熱ダメージUP", "電磁ダメージUP", "自然ダメージUP", "会心率UP", "必殺技効率UP", "アーツダメージUP"],
+    skill: ["強攻", "追襲", "昂揚", "残虐", "付術", "夜幕", "流回", "効率"] },
+  { region: "武陵", name: "実験区域",
+    extra: ["HPアップ", "灼熱ダメージUP", "電磁ダメージUP", "寒冷ダメージUP", "自然ダメージUP", "アーツ強度UP", "必殺技効率UP", "回復効率UP"],
+    skill: ["圧制", "破砕", "巧技", "残虐", "付術", "切骨", "夜幕", "流回"] },
+  { region: "武陵", name: "蔵剣谷",
+    extra: ["攻撃力UP", "HPアップ", "物理ダメージUP", "灼熱ダメージUP", "寒冷ダメージUP", "自然ダメージUP", "アーツ強度UP", "回復効率UP"],
+    skill: ["強攻", "追襲", "昂揚", "巧技", "治癒", "切骨", "噴発", "効率"] },
+  { region: "武陵", name: "応龍関",
+    extra: ["攻撃力UP", "物理ダメージUP", "電磁ダメージUP", "寒冷ダメージUP", "自然ダメージUP", "会心率UP", "アーツ強度UP", "アーツダメージUP"],
+    skill: ["圧制", "追襲", "巧技", "残虐", "付術", "噴発", "流回", "効率"] },
+  { region: "武陵", name: "北部封鎖区域",
+    extra: ["HPアップ", "物理ダメージUP", "灼熱ダメージUP", "自然ダメージUP", "会心率UP", "アーツ強度UP", "アーツダメージUP", "回復効率UP"],
+    skill: ["強攻", "圧制", "追襲", "破砕", "昂揚", "付術", "治癒", "効率"] },
+  { region: "武陵", name: "雪松林",
+    extra: ["攻撃力UP", "HPアップ", "灼熱ダメージUP", "電磁ダメージUP", "会心率UP", "必殺技効率UP", "アーツダメージUP", "回復効率UP"],
+    skill: ["強攻", "破砕", "昂揚", "残虐", "治癒", "噴発", "夜幕", "流回"] },
+];
+
+/* =========================================================
+   準備
+   ========================================================= */
+const KEYS = Object.keys(CATEGORIES);
+// 一覧表とカードに出す枠(基礎効果は全地点共通なので省略)
+const MATRIX_KEYS = ["extra", "skill"];
+const COPY_LABEL = "⧉ リストコピー";
+
+// base 省略時の補完と、検索用の Set 化
+const LOCS = DATA.map(l => {
+  const loc = { ...l };
+  for (const k of KEYS) loc[k] = new Set(l[k] ?? CATEGORIES[k].items);
+  return loc;
+});
+// 全地点で同じ候補しか出ない枠(絞り込みに効かない)
+const COMMON = new Set(KEYS.filter(k => LOCS.every(l => l[k].size === CATEGORIES[k].items.length)));
+
+const $ = id => document.getElementById(id);
+const el = {
+  groups: $("groups"), selBar: $("selBar"), count: $("count"), countOf: $("countOf"),
+  copy: $("copyList"), cards: $("cardsView"), matrix: $("matrixView"), theme: $("themeBtn"),
+};
+const state = { sel: Object.fromEntries(KEYS.map(k => [k, null])), view: "cards" };
+
+/* =========================================================
+   ユーティリティ
+   ========================================================= */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const cls = (...names) => names.filter(Boolean).join(" ");
+const short = s => s.replace("ダメージUP", "ダメ").replace(/(UP|アップ)$/, "");
+
+// skipKey の枠を無視して、選択中の素質をすべて満たすか
+const matches = (loc, skipKey) =>
+  KEYS.every(k => k === skipKey || !state.sel[k] || loc[k].has(state.sel[k]));
+const filtered = () => LOCS.filter(l => matches(l));
+
+/* =========================================================
+   描画
+   ========================================================= */
+function renderSelBar() {
+  const picked = KEYS.filter(k => state.sel[k]);
+  el.selBar.innerHTML = picked.length
+    ? picked.map(k => `<span class="sel-chip"><small>${CATEGORIES[k].label}</small>${esc(state.sel[k])}
+        <button data-rm="${k}" aria-label="${CATEGORIES[k].label}の選択を解除">✕</button></span>`).join("")
+      + `<button class="clear-all" data-clear>すべて解除</button>`
+    : `<span class="placeholder">素質を選ぶと、すべてを満たす地点だけが残ります</span>`;
+}
+
+function renderGroups() {
+  el.groups.innerHTML = KEYS.map(k => {
+    const chips = CATEGORIES[k].items.map(item => {
+      // この素質を選んだ場合に残る地点数(同じ枠の現在の選択は無視)
+      const n = LOCS.filter(l => matches(l, k) && l[k].has(item)).length;
+      const on = state.sel[k] === item;
+      return `<button class="${cls("btn chip", !on && n === 0 && "dead")}" data-k="${k}" data-v="${esc(item)}" aria-pressed="${on}">
+        ${esc(item)}<span class="badge">${n}</span></button>`;
+    }).join("");
+    return `<section class="group">
+      <div class="group-head"><h2>${CATEGORIES[k].label}</h2>
+        <span class="label">1つ選択${COMMON.has(k) ? "・全地点共通" : ""}</span></div>
+      <div class="chips">${chips}</div></section>`;
+  }).join("");
+}
+
+function renderCards(list) {
+  if (!list.length) {
+    el.cards.innerHTML = `<div class="panel empty"><strong>該当する地点はありません</strong>
+      この組み合わせは同じ地点で出ません。どれかの選択を外してください。</div>`;
+    return;
+  }
+  el.cards.innerHTML = list.map(l => `<article class="panel card">
+    <div class="card-top"><span class="badge region">${esc(l.region)}</span><h3>${esc(l.name)}</h3></div>
+    ${MATRIX_KEYS.map(k => `<div>
+      <div class="label">${CATEGORIES[k].label}</div>
+      <div class="tags">${CATEGORIES[k].items.filter(i => l[k].has(i))
+        .map(i => `<span class="${cls("badge", state.sel[k] === i && "hit")}">${esc(i)}</span>`).join("")}</div>
+    </div>`).join("")}
+  </article>`).join("");
+}
+
+function renderMatrix(list) {
+  // 列定義を1回だけ作り、ヘッダーと各行で共用する
+  const cols = MATRIX_KEYS.flatMap(k => CATEGORIES[k].items.map((item, i) => ({
+    k, item, sep: i === 0 && k !== MATRIX_KEYS[0], sel: state.sel[k] === item,
+  })));
+  const visible = new Set(list);
+
+  const groupHead = MATRIX_KEYS.map((k, i) =>
+    `<th class="${cls(i > 0 && "sep")}" colspan="${CATEGORIES[k].items.length}">${CATEGORIES[k].label}</th>`).join("");
+  const colHead = cols.map(c =>
+    `<th class="${cls("vt", c.sep && "sep", c.sel && "sel")}" title="${esc(c.item)}">${esc(short(c.item))}</th>`).join("");
+  const rows = LOCS.map(l => `<tr class="${cls(!visible.has(l) && "dim")}">
+    <th>${esc(l.name)}<small>${esc(l.region)}</small></th>
+    ${cols.map(c => `<td class="${cls(l[c.k].has(c.item) && "y", c.sep && "sep", c.sel && "sel")}"></td>`).join("")}
+  </tr>`).join("");
+
+  el.matrix.innerHTML = `<table class="matrix">
+    <thead><tr><th></th>${groupHead}</tr><tr><th>地点</th>${colHead}</tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+function render() {
+  const list = filtered();
+  renderSelBar();
+  renderGroups();
+  el.count.textContent = list.length;
+  el.countOf.textContent = `/ ${LOCS.length} 地点`;
+  el.copy.disabled = list.length === 0;
+
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === state.view));
+  el.cards.hidden = state.view !== "cards";
+  el.matrix.hidden = state.view !== "matrix";
+  (state.view === "cards" ? renderCards : renderMatrix)(list);
+}
+
+/* =========================================================
+   操作
+   ========================================================= */
+document.addEventListener("click", e => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  const { k, v, rm, view } = t.dataset;
+  if (k)                          state.sel[k] = state.sel[k] === v ? null : v;
+  else if (rm)                    state.sel[rm] = null;
+  else if ("clear" in t.dataset)  KEYS.forEach(key => state.sel[key] = null);
+  else if (view)                  state.view = view;
+  else return;
+  render();
+});
+
+// リストコピー
+const toList = list => list.map(l => `- ${l.region}-${l.name}`).join("\n");
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {}
+  // file:// などで Clipboard API が使えない場合の代替
+  const ta = Object.assign(document.createElement("textarea"), { value: text });
+  ta.style.cssText = "position:fixed;opacity:0";
+  document.body.append(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch {}
+  ta.remove();
+  return ok;
+}
+
+el.copy.textContent = COPY_LABEL;
+el.copy.addEventListener("click", async () => {
+  const list = filtered();
+  if (!list.length) return;
+  const ok = await copyText(toList(list));
+  el.copy.classList.toggle("done", ok);
+  el.copy.textContent = ok ? "✓ コピーしました" : "コピーに失敗しました";
+  clearTimeout(el.copy._timer);
+  el.copy._timer = setTimeout(() => {
+    el.copy.classList.remove("done");
+    el.copy.textContent = COPY_LABEL;
+  }, 1600);
+});
+
+// テーマ切替(自動 → ライト → ダーク)
+const THEMES = ["auto", "light", "dark"];
+const THEME_KEY = "kf-theme";
+function applyTheme(t) {
+  if (t === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = t;
+}
+let theme = "auto";
+try { theme = THEMES.includes(localStorage.getItem(THEME_KEY)) ? localStorage.getItem(THEME_KEY) : "auto"; } catch {}
+applyTheme(theme);
+el.theme.addEventListener("click", () => {
+  theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+  applyTheme(theme);
+  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+});
+
+render();
+</script>
+</body>
+</html>
