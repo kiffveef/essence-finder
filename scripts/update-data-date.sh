@@ -12,7 +12,7 @@ if diff -q <(git show "HEAD:$FILE" 2>/dev/null | data_block) <(git show ":$FILE"
 fi
 
 TODAY=$(date +%F)
-PATTERN="s/([0-9]{4}-[0-9]{2}-[0-9]{2} 時点)/($TODAY 時点)/"
+PATTERN="s/\\([0-9]{4}-[0-9]{2}-[0-9]{2} 時点\\)/($TODAY 時点)/"
 
 # 作業ツリーの未ステージ変更を巻き込まないよう、ステージ済みの内容だけを書き換えて index に戻す
 BLOB=$(git show ":$FILE" | sed -E "$PATTERN" | git hash-object -w --stdin)
